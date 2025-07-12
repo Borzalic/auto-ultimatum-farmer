@@ -1,11 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['ultimatum.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('accept_trial.png', '.'), ('take_rewards.png', '.'), ('current_reward_box.png', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
