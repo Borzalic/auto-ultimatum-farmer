@@ -5,3 +5,13 @@ dist/
 *.pyd
 *.pyw
 *.pyz
+log.txt
+ruin_stack_base64.py
+stack.py
+*.jpg
+*.png
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.ico

@@ -2,4 +2,5 @@ opencv-python>=4.8.0
 numpy>=1.26.0
 pyautogui>=0.9.54
 Pillow>=10.0.0
-pyinstaller>=6.1.0 
+pyinstaller>=6.1.0
+keyboard>=0.13.5 
