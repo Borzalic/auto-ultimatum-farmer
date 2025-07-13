@@ -74,6 +74,7 @@ def setup_hotkeys():
 def find_take_rewards_button():
     """Take Rewards butonunu bulur"""
     if take_rewards_image is None:
+        log_message("❌ Take Rewards resmi yüklenmemiş")
         return None
     
     try:
@@ -83,15 +84,72 @@ def find_take_rewards_button():
         screenshot = pyautogui.screenshot()
         screenshot_gray = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2GRAY)
         res = cv2.matchTemplate(screenshot_gray, template_gray, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.8
+        
+        # Threshold değerini daha da düşürerek daha esnek hale getir
+        threshold = 0.5
         loc = np.where(res >= threshold)
         
-        for pt in zip(*loc[::-1]):
-            return pt[0] + tw // 2, pt[1] + th // 2  # Butonun ortası
-        return None
+        # En yüksek eşleşme değerini bul
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        log_message(f"🔍 Take Rewards arama - En yüksek skor: {max_val:.3f} (threshold: {threshold})")
+        
+        if max_val >= threshold:
+            x, y = max_loc[0] + tw // 2, max_loc[1] + th // 2
+            log_message(f"🎯 Take Rewards bulundu: ({x}, {y}) - Skor: {max_val:.3f}")
+            return x, y
+        else:
+            log_message(f"❌ Take Rewards bulunamadı - En yüksek skor: {max_val:.3f} < {threshold}")
+            # Eğer hiç bulunamazsa, daha düşük threshold ile tekrar dene
+            if max_val > 0.3:  # Çok düşük skor varsa
+                log_message(f"⚠️ Düşük skor tespit edildi: {max_val:.3f}, yine de denenecek")
+                x, y = max_loc[0] + tw // 2, max_loc[1] + th // 2
+                log_message(f"🎯 Take Rewards (düşük skor): ({x}, {y}) - Skor: {max_val:.3f}")
+                return x, y
+            return None
+            
     except Exception as e:
-        log_message(f"Take Rewards arama hatası: {e}")
+        log_message(f"❌ Take Rewards arama hatası: {e}")
         return None
+
+def test_take_rewards():
+    """Take Rewards butonunu test eder"""
+    log_message("🧪 Take Rewards test başlatılıyor...")
+    
+    if take_rewards_image is None:
+        log_message("❌ Take Rewards resmi yüklenmemiş")
+        return False
+    
+    try:
+        template_gray = cv2.cvtColor(take_rewards_image, cv2.COLOR_BGR2GRAY)
+        tw, th = template_gray.shape[::-1]
+        log_message(f"📐 Template boyutu: {tw}x{th}")
+        
+        screenshot = pyautogui.screenshot()
+        screenshot_gray = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2GRAY)
+        res = cv2.matchTemplate(screenshot_gray, template_gray, cv2.TM_CCOEFF_NORMED)
+        
+        # Farklı threshold değerleri ile test et
+        thresholds = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3]
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        
+        log_message(f"🔍 En yüksek eşleşme skoru: {max_val:.3f}")
+        
+        for threshold in thresholds:
+            loc = np.where(res >= threshold)
+            matches = len(list(zip(*loc[::-1])))
+            log_message(f"📊 Threshold {threshold}: {matches} eşleşme bulundu")
+            
+            if matches > 0:
+                x, y = max_loc[0] + tw // 2, max_loc[1] + th // 2
+                log_message(f"✅ Threshold {threshold} ile bulundu: ({x}, {y})")
+                return True
+        
+        log_message("❌ Hiçbir threshold ile bulunamadı")
+        return False
+        
+    except Exception as e:
+        log_message(f"❌ Test hatası: {e}")
+        return False
 
 def log_message(msg):
     """Log mesajı ekler"""
@@ -275,6 +333,11 @@ stop_btn = tk.Button(button_frame, text="⏹ Durdur", command=stop_clicking,
                     bg='#dc3545', fg='white', font=('Arial', 9, 'bold'),
                     width=10, height=1)
 stop_btn.pack(side='left', padx=(0, 3))
+
+test_btn = tk.Button(button_frame, text="🧪 Test", command=test_take_rewards, 
+                    bg='#17a2b8', fg='white', font=('Arial', 9, 'bold'),
+                    width=10, height=1)
+test_btn.pack(side='left', padx=(0, 3))
 
 clear_log_btn = tk.Button(button_frame, text="🗑 Temizle", command=clear_logs, 
                          bg='#6c757d', fg='white', font=('Arial', 9),
