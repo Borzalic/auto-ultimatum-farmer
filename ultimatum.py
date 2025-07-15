@@ -191,34 +191,44 @@ def find_and_click_accept_trial():
         # En yüksek eşleşme değerini bul
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         
-        for pt in zip(*loc[::-1]):
-            try:
-                x, y = pt[0] + w // 2, pt[1] + h // 2
-                log_message(f"🎯 Accept Trial bulundu ve tıklanıyor: ({x}, {y})")
-                pyautogui.moveTo(x, y, duration=0.1)
-                
-                # 3 kez tıkla
-                for i in range(3):
+        if max_val >= threshold:
+            for pt in zip(*loc[::-1]):
+                try:
+                    x, y = pt[0] + w // 2, pt[1] + h // 2
+                    log_message(f"🎯 Accept Trial bulundu ve tıklanıyor: ({x}, {y})")
+                    
+                    # Hızlıca butonun üzerine git
+                    pyautogui.moveTo(x, y, duration=0.1)
+                    time.sleep(0.05)
+                    
+                    # Hızlıca tıkla
                     pyautogui.click()
-                    time.sleep(0.08)
-                
-                # 10 saniye bekle ve kontrol et
-                for i in range(10):
-                    time.sleep(1.0)
+                    
+                    # Hızlıca uzağa git
+                    safe_x = x
+                    safe_y = y - 100
+                    pyautogui.moveTo(safe_x, safe_y, duration=0.1)
+                    
+                    # Kısa süre bekle ve kontrol et
+                    time.sleep(0.5)
                     screenshot2 = pyautogui.screenshot()
                     screenshot2_gray = cv2.cvtColor(np.array(screenshot2), cv2.COLOR_RGB2GRAY)
                     res2 = cv2.matchTemplate(screenshot2_gray, template_gray, cv2.TM_CCOEFF_NORMED)
                     if not np.any(res2 >= threshold):
                         log_message("✅ Accept Trial başarıyla tıklandı")
                         return True
-                log_message("❌ Accept Trial tıklama başarısız")
-                return False
-            except Exception as e:
-                log_message(f"❌ Tıklama hatası: {e}")
-                return False
+                    
+                    log_message("❌ Accept Trial tıklama başarısız")
+                    return False
+                    
+                except Exception as e:
+                    log_message(f"❌ Tıklama hatası: {e}")
+                    return False
+            
+            return False
+        else:
+            return False
         
-        
-        return False
     except Exception as e:
         log_message(f"❌ Accept Trial arama hatası: {e}")
         return False
